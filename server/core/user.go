@@ -1,12 +1,11 @@
-package user
+package core
 
 import (
   "github.com/gorilla/websocket"
   "log"
   "net/http"
+  "strconv"
   "time"
-
-  "github.com/zlyang/agar/server/logic"
 )
 
 const (
@@ -23,13 +22,14 @@ var upgrader = websocket.Upgrader{
 
 type User struct { // 以map[string]user的形式保存用户信息
   Ws      *websocket.Conn
-  LogicOb logic.Logic
+  LogicOb *Logic
   Update  bool // 标识是否需要推送
+  Send    chan []byte
 }
 
 func (c *User) readPump() {
   defer func() {
-    h.unregister <- c
+    H.Unregister <- c
     c.Ws.Close()
   }()
   c.Ws.SetReadLimit(maxMessageSize)
@@ -40,7 +40,9 @@ func (c *User) readPump() {
     if err != nil {
       break
     }
-    h.broadcast <- message
+    // H.Broadcast <- message    // 由于传送的控制信息，需要定时处理，所以不需要广播
+
+    // TODO: 先放在队列中，定时进行处理逻辑
   }
 }
 
@@ -58,7 +60,7 @@ func (c *User) writePump() {
 
   for {
     select {
-    case message, ok := <-c.send:
+    case message, ok := <-c.Send:
       if !ok { // 如果send channel出错，则关闭连接
         c.write(websocket.CloseMessage, []byte{})
         return
@@ -74,6 +76,10 @@ func (c *User) writePump() {
   }
 }
 
+func (u *User) GetInfoString() string {
+  return u.LogicOb.Name + ",(" + strconv.Itoa(u.LogicOb.Position.X) + "," + strconv.Itoa(u.LogicOb.Position.Y) + ")"
+}
+
 func ServeConnect(w http.ResponseWriter, r *http.Request) {
   if r.Method != "GET" {
     http.Error(w, "Method not allowed", 405)
@@ -86,12 +92,28 @@ func ServeConnect(w http.ResponseWriter, r *http.Request) {
     return
   }
 
-  c := &User{Ws: ws}
-  h.register <- c
+  u, err := NewUser(ws)
+  if err != nil {
+    http.Error(w, "Server not enough source", 503)
+    return
+  }
 
-  go c.writePump()
-  c.readPump()
+  H.Register <- u
+
+  go u.writePump()
+
+  u.Send <- []byte(u.GetInfoString())
+
+  u.readPump()
+
+  return
 }
 
-func NewUser(ws *websocket.Conn) *User {
+func NewUser(ws *websocket.Conn) (*User, error) {
+  l, err := NewLogicObject()
+  if err != nil {
+    return nil, err
+  }
+
+  return &User{Ws: ws, LogicOb: l, Update: false, Send: make(chan []byte, 256)}, nil
 }
