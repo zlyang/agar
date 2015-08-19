@@ -11,7 +11,9 @@ import (
 var addr = flag.String("addr", ":8080", "http service address")
 
 func main() {
-  go core.H.Run()
+  core.H.Run()
+  core.UpdateClientsRun()
+  core.HandleLogicRun()
 
   http.HandleFunc("/connect", core.ServeConnect)
 

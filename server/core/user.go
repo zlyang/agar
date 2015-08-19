@@ -40,9 +40,8 @@ func (c *User) readPump() {
     if err != nil {
       break
     }
-    // H.Broadcast <- message    // 由于传送的控制信息，需要定时处理，所以不需要广播
 
-    // TODO: 先放在队列中，定时进行处理逻辑
+    HandleLogicChan <- ActionHandleLog{} // 处理动作
   }
 }
 
@@ -115,5 +114,5 @@ func NewUser(ws *websocket.Conn) (*User, error) {
     return nil, err
   }
 
-  return &User{Ws: ws, LogicOb: l, Update: false, Send: make(chan []byte, 256)}, nil
+  return &User{Ws: ws, LogicOb: l, Update: true, Send: make(chan []byte, 256)}, nil
 }
