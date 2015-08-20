@@ -18,8 +18,8 @@ import (
 
 const (
   ActionLogHandlePeriod = (1000 / 66) * time.Millisecond // 66Hz
-  CanvasWidth           = 1080                           // 画布的宽度
-  CanvasHeight          = 1920                           // 画布的高度
+  CanvasWidth           = 600                            // 画布的宽度
+  CanvasHeight          = 800                            // 画布的高度
   ObjectWidth           = 9                              // 绘制物体的宽度，正方形
   RandString            = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 )
@@ -112,6 +112,18 @@ func move(a ActionHandleLog) {
   case "U":
     prediction.Y -= 1
   case "D":
+    prediction.Y += 1
+  case "UL":
+    prediction.X -= 1
+    prediction.Y -= 1
+  case "UR":
+    prediction.X += 1
+    prediction.Y -= 1
+  case "DL":
+    prediction.X -= 1
+    prediction.Y += 1
+  case "DR":
+    prediction.X += 1
     prediction.Y += 1
   default:
     return
