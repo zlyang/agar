@@ -28,10 +28,10 @@ var (
 	touchX float32
 	touchY float32
 
-	wsConn         = conn.DefaultConn
-	wsConnStatChan = make(chan bool)
-	player         conn.S2CSelfInfo
-	mClients       = make(map[string]conn.Logic)
+	wsConn          = conn.DefaultConn
+	wsConnWriteChan = make(chan []byte, 256)
+	player          conn.S2CSelfInfo
+	mClients        = make(map[string]conn.Logic)
 
 	paintPlayers []ui.Player
 	sz           size.Event
@@ -55,6 +55,30 @@ func main() {
 
 				a.EndPaint(e)
 			case touch.Event:
+
+				action := conn.C2SAction{
+					Type: conn.CUActionType,
+					ID:   player.ID,
+				}
+
+				if e.Y > touchY {
+					action.Action = "D"
+				} else if e.Y < touchY {
+					action.Action = "U"
+				}
+
+				if e.X > touchX {
+					action.Action += "R"
+				} else if e.X < touchX {
+					action.Action += "L"
+				}
+				if action.Action != "" {
+					data, err := json.Marshal(action)
+					if err == nil {
+						wsConnWriteChan <- data
+					}
+				}
+
 				touchX = e.X
 				touchY = e.Y
 			}
@@ -71,6 +95,7 @@ func appLifecycle(e lifecycle.Event) error {
 
 		// 启动 读取 goroutine
 		go wsConn.ReadPump(handleMessage, nil)
+		go wsConn.WritePump(wsConnWriteChan)
 
 	case lifecycle.CrossOff:
 		// 关闭 读取 goroutine
