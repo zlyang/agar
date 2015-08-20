@@ -6,8 +6,6 @@ import (
   "encoding/json"
   "net/http"
   "time"
-
-  "github.com/gorilla/websocket"
 )
 
 type User struct { // 以map[string]user的形式保存用户信息
