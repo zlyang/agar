@@ -36,7 +36,7 @@ type Logic struct {
 }
 
 type ActionHandleLog struct {
-  Name   string
+  ID     string
   Action string
 }
 
@@ -90,7 +90,7 @@ func HandleLogicRun() {
   go func() {
     for {
       select {
-      case a <- HandleLogicChan: // 以进入channel的时间为顺序，不考虑阻塞的情况
+      case a := <-HandleLogicChan: // 以进入channel的时间为顺序，不考虑阻塞的情况
         move(a)
       }
     }
@@ -98,7 +98,7 @@ func HandleLogicRun() {
 }
 
 func move(a ActionHandleLog) {
-  self, ok := H.Users[a.Name]
+  self, ok := H.Users[a.ID]
   if !ok {
     return
   }
@@ -118,22 +118,22 @@ func move(a ActionHandleLog) {
   }
 
   // 先查看是否到边沿
-  if x < ObjectWidth/2 || x > (CanvasWidth-ObjectWidth/2) ||
-    y < ObjectWidth/2 || y > (CanvasHeight-ObjectWidth/2) {
-    break
+  if prediction.X < ObjectWidth/2 || prediction.X > (CanvasWidth-ObjectWidth/2) ||
+    prediction.Y < ObjectWidth/2 || prediction.Y > (CanvasHeight-ObjectWidth/2) {
+    return
   }
 
   // 再查看是否与其它玩家有交集
   for n, u := range H.Users {
-    if n != a.Name {
-      if math.Abs(float64(u.LogicOb.Position.X-int(x))) < ObjectWidth ||
-        math.Abs(float64(u.LogicOb.Position.Y-int(y))) < ObjectWidth {
-        break
+    if n != a.ID {
+      if math.Abs(float64(u.LogicOb.Position.X-prediction.X)) < ObjectWidth ||
+        math.Abs(float64(u.LogicOb.Position.Y-prediction.Y)) < ObjectWidth {
+        return
       }
     }
   }
 
   // 有效动作。更新状态
-  H.Users[a.Name].LogicOb.Position = prediction
-  H.Users[a.Name].Update = true
+  H.Users[a.ID].LogicOb.Position = prediction
+  H.Users[a.ID].Update = true
 }

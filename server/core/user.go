@@ -1,11 +1,14 @@
 package core
 
 import (
-  "github.com/gorilla/websocket"
+  "crypto/sha1"
+  "encoding/json"
   "log"
   "net/http"
   "strconv"
   "time"
+
+  "github.com/gorilla/websocket"
 )
 
 const (
@@ -24,6 +27,7 @@ type User struct { // 以map[string]user的形式保存用户信息
   Ws      *websocket.Conn
   LogicOb *Logic
   Update  bool // 标识是否需要推送
+  ID      string
   Send    chan []byte
 }
 
@@ -41,7 +45,13 @@ func (c *User) readPump() {
       break
     }
 
-    HandleLogicChan <- ActionHandleLog{} // 处理动作
+    var m C2SAction
+    if err := json.Unmarshal(message, &m); err != nil {
+      log.Println(string(message), err)
+      continue
+    }
+
+    HandleLogicChan <- ActionHandleLog{Name: m.Name, Action: m.Action} // 处理动作
   }
 }
 
@@ -97,11 +107,22 @@ func ServeConnect(w http.ResponseWriter, r *http.Request) {
     return
   }
 
+  // 组织回传的数据，返回所有的
+  clients := S2CClientInfo{Type: CDAllClientsType, Clients: make([]Logic, 0)}
+  clients.Clients = append(clients.Clients, *u.LogicOb)
+  for _, u := range H.Users {
+    clients.Clients = append(clients.Clients, *u.LogicOb)
+  }
+  sendClients, err := json.Marshal(clients)
+  if err != nil {
+    return
+  }
+
   H.Register <- u
 
   go u.writePump()
 
-  u.Send <- []byte(u.GetInfoString())
+  u.Send <- sendClients
 
   u.readPump()
 
@@ -114,5 +135,8 @@ func NewUser(ws *websocket.Conn) (*User, error) {
     return nil, err
   }
 
-  return &User{Ws: ws, LogicOb: l, Update: true, Send: make(chan []byte, 256)}, nil
+  h := sha1.New()
+  id := h.Sum([]byte(l.Name + time.Now().String()))
+
+  return &User{Ws: ws, LogicOb: l, Update: true, Send: make(chan []byte, 256), ID: id}, nil
 }
