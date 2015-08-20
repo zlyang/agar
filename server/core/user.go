@@ -6,6 +6,8 @@ import (
   "encoding/json"
   "net/http"
   "time"
+
+  "github.com/busyStone/agar/conn"
 )
 
 type User struct { // 以map[string]user的形式保存用户信息
@@ -17,16 +19,9 @@ type User struct { // 以map[string]user的形式保存用户信息
 }
 
 func ServeConnect(w http.ResponseWriter, r *http.Request) {
-  conn := Conn{
-    WriteWait:       10 * time.Second,
-    PongWait:        60 * time.Second,
-    PingPeriod:      (60 * time.Second * 9) / 10,
-    MaxMessageSize:  512,
-    ReadBufferSize:  1024,
-    WriteBufferSize: 1024,
-  }
+  conn := conn.DefaultConn
 
-  err := conn.Init(w, r)
+  err := conn.Serve(w, r)
   if err != nil {
     return
   }
