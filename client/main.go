@@ -168,9 +168,11 @@ func newPlayer(client *conn.Logic, sz size.Event) ui.Player {
 	player := ui.Player{}
 
 	R, G, B := paseColor(client.Color)
+
 	R = 0.0
+	G = 255.0
 	B = 0.0
-	G = 255
+
 	player.Color.R = R
 	player.Color.G = G
 	player.Color.B = B
