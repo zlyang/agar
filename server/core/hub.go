@@ -20,6 +20,7 @@ func (h *hub) Run() {
       select {
       case u := <-h.Register:
         h.Users[u.ID] = u
+        u.Finish <- ""
       case u := <-h.Unregister:
         if _, ok := h.Users[u.LogicOb.Name]; ok {
           DeleteClient(u)

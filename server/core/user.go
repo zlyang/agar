@@ -2,6 +2,7 @@ package core
 
 import (
   "crypto/sha1"
+  "encoding/hex"
   "encoding/json"
   "log"
   "net/http"
@@ -29,6 +30,7 @@ type User struct { // 以map[string]user的形式保存用户信息
   Update  bool // 标识是否需要推送
   ID      string
   Send    chan []byte
+  Finish  chan interface{} // 无缓冲通道，用于通知操作完成
 }
 
 func (c *User) readPump() {
@@ -51,7 +53,7 @@ func (c *User) readPump() {
       continue
     }
 
-    HandleLogicChan <- ActionHandleLog{Name: m.Name, Action: m.Action} // 处理动作
+    HandleLogicChan <- ActionHandleLog{ID: m.ID, Action: m.Action} // 处理动作
   }
 }
 
@@ -107,22 +109,14 @@ func ServeConnect(w http.ResponseWriter, r *http.Request) {
     return
   }
 
-  // 组织回传的数据，返回所有的
-  clients := S2CClientInfo{Type: CDAllClientsType, Clients: make([]Logic, 0)}
-  clients.Clients = append(clients.Clients, *u.LogicOb)
-  for _, u := range H.Users {
-    clients.Clients = append(clients.Clients, *u.LogicOb)
-  }
-  sendClients, err := json.Marshal(clients)
-  if err != nil {
-    return
-  }
-
   H.Register <- u
-
   go u.writePump()
 
-  u.Send <- sendClients
+  <-u.Finish
+
+  // 发送给用户更新信息
+  SendSelfInfo(u)
+  SendAllClientsInfo(u)
 
   u.readPump()
 
@@ -136,7 +130,8 @@ func NewUser(ws *websocket.Conn) (*User, error) {
   }
 
   h := sha1.New()
-  id := h.Sum([]byte(l.Name + time.Now().String()))
+  h.Write([]byte(l.Name + time.Now().String()))
+  id := hex.EncodeToString(h.Sum(nil))
 
-  return &User{Ws: ws, LogicOb: l, Update: true, Send: make(chan []byte, 256), ID: id}, nil
+  return &User{Ws: ws, LogicOb: l, Update: true, Send: make(chan []byte, 256), ID: id, Finish: make(chan interface{})}, nil
 }
