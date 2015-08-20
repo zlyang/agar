@@ -87,10 +87,6 @@ func (u *User) writePump() {
   }
 }
 
-func (u *User) GetInfoString() string {
-  return u.LogicOb.Name + ",(" + strconv.Itoa(u.LogicOb.Position.X) + "," + strconv.Itoa(u.LogicOb.Position.Y) + ")"
-}
-
 func ServeConnect(w http.ResponseWriter, r *http.Request) {
   if r.Method != "GET" {
     http.Error(w, "Method not allowed", 405)
