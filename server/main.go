@@ -4,6 +4,7 @@ import (
   "flag"
   "log"
   "net/http"
+  "runtime"
 
   "github.com/zlyang/agar/server/core"
 )
@@ -11,6 +12,10 @@ import (
 var addr = flag.String("addr", ":8080", "http service address")
 
 func main() {
+  log.SetFlags(log.Lshortfile | log.LstdFlags)
+
+  runtime.GOMAXPROCS(runtime.NumCPU())
+
   core.H.Run()
   core.UpdateClientsRun()
   core.HandleLogicRun()

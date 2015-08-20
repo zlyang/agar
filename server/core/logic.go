@@ -18,10 +18,11 @@ import (
 
 const (
   ActionLogHandlePeriod = (1000 / 66) * time.Millisecond // 66Hz
-  CanvasWidth           = 1080                           // 画布的宽度
-  CanvasHeight          = 1920                           // 画布的高度
+  CanvasWidth           = 600                            // 画布的宽度
+  CanvasHeight          = 800                            // 画布的高度
   ObjectWidth           = 9                              // 绘制物体的宽度，正方形
   RandString            = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+  RandColorString       = "ABCDEF0123456789"
 )
 
 type Coordinate struct {
@@ -65,7 +66,7 @@ func NewLogicObject() (*Logic, error) {
       }
     }
 
-    return &Logic{Position: Coordinate{X: int(x), Y: int(y)}, Color: "", Name: NewName()}, nil
+    return &Logic{Position: Coordinate{X: int(x), Y: int(y)}, Color: NewColor(), Name: NewName()}, nil
   }
 
   return nil, errors.New("分配空间失败")
@@ -80,6 +81,17 @@ func NewName() string { // 不去重，有可能会存在重复的情况
   }
 
   return name
+}
+
+func NewColor() string {
+  r := rand.New(rand.NewSource(time.Now().UnixNano()))
+
+  color := "#"
+  for i := 0; i < 6; i++ { // 6个字节长度的名字
+    color += string(RandColorString[r.Int31n(int32(len(RandColorString)))])
+  }
+
+  return color
 }
 
 // 周期性处理所有请求，周期小于update clients的周期
@@ -112,6 +124,18 @@ func move(a ActionHandleLog) {
   case "U":
     prediction.Y -= 1
   case "D":
+    prediction.Y += 1
+  case "UL":
+    prediction.X -= 1
+    prediction.Y -= 1
+  case "UR":
+    prediction.X += 1
+    prediction.Y -= 1
+  case "DL":
+    prediction.X -= 1
+    prediction.Y += 1
+  case "DR":
+    prediction.X += 1
     prediction.Y += 1
   default:
     return

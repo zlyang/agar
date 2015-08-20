@@ -20,10 +20,11 @@ func (h *hub) Run() {
       select {
       case u := <-h.Register:
         h.Users[u.ID] = u
+        u.Finish <- ""
       case u := <-h.Unregister:
-        if _, ok := h.Users[u.LogicOb.Name]; ok {
+        if _, ok := h.Users[u.ID]; ok {
           DeleteClient(u)
-          delete(h.Users, u.LogicOb.Name)
+          delete(h.Users, u.ID)
           close(u.Send)
         }
       case m := <-h.Broadcast:

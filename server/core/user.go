@@ -2,6 +2,7 @@ package core
 
 import (
   "crypto/sha1"
+  "encoding/hex"
   "encoding/json"
   "log"
   "net/http"
@@ -29,18 +30,19 @@ type User struct { // 以map[string]user的形式保存用户信息
   Update  bool // 标识是否需要推送
   ID      string
   Send    chan []byte
+  Finish  chan interface{} // 无缓冲通道，用于通知操作完成
 }
 
-func (c *User) readPump() {
+func (u *User) readPump() {
   defer func() {
-    H.Unregister <- c
-    c.Ws.Close()
+    H.Unregister <- u
+    u.Ws.Close()
   }()
-  c.Ws.SetReadLimit(maxMessageSize)
-  c.Ws.SetReadDeadline(time.Now().Add(pongWait))
-  c.Ws.SetPongHandler(func(string) error { c.Ws.SetReadDeadline(time.Now().Add(pongWait)); return nil })
+  u.Ws.SetReadLimit(maxMessageSize)
+  u.Ws.SetReadDeadline(time.Now().Add(pongWait))
+  u.Ws.SetPongHandler(func(string) error { u.Ws.SetReadDeadline(time.Now().Add(pongWait)); return nil })
   for {
-    _, message, err := c.Ws.ReadMessage()
+    _, message, err := u.Ws.ReadMessage()
     if err != nil {
       break
     }
@@ -51,34 +53,34 @@ func (c *User) readPump() {
       continue
     }
 
-    HandleLogicChan <- ActionHandleLog{Name: m.Name, Action: m.Action} // 处理动作
+    HandleLogicChan <- ActionHandleLog{ID: m.ID, Action: m.Action} // 处理动作
   }
 }
 
-func (c *User) write(mt int, payload []byte) error {
-  c.Ws.SetWriteDeadline(time.Now().Add(writeWait))
-  return c.Ws.WriteMessage(mt, payload)
+func (u *User) write(mt int, payload []byte) error {
+  u.Ws.SetWriteDeadline(time.Now().Add(writeWait))
+  return u.Ws.WriteMessage(mt, payload)
 }
 
-func (c *User) writePump() {
+func (u *User) writePump() {
   ticker := time.NewTicker(pingPeriod)
   defer func() {
     ticker.Stop()
-    c.Ws.Close()
+    u.Ws.Close()
   }()
 
   for {
     select {
-    case message, ok := <-c.Send:
+    case message, ok := <-u.Send:
       if !ok { // 如果send channel出错，则关闭连接
-        c.write(websocket.CloseMessage, []byte{})
+        u.write(websocket.CloseMessage, []byte{})
         return
       }
-      if err := c.write(websocket.TextMessage, message); err != nil {
+      if err := u.write(websocket.TextMessage, message); err != nil {
         return
       }
     case <-ticker.C: // 超时，发送Ping包
-      if err := c.write(websocket.PingMessage, []byte{}); err != nil {
+      if err := u.write(websocket.PingMessage, []byte{}); err != nil {
         return
       }
     }
@@ -107,22 +109,14 @@ func ServeConnect(w http.ResponseWriter, r *http.Request) {
     return
   }
 
-  // 组织回传的数据，返回所有的
-  clients := S2CClientInfo{Type: CDAllClientsType, Clients: make([]Logic, 0)}
-  clients.Clients = append(clients.Clients, *u.LogicOb)
-  for _, u := range H.Users {
-    clients.Clients = append(clients.Clients, *u.LogicOb)
-  }
-  sendClients, err := json.Marshal(clients)
-  if err != nil {
-    return
-  }
-
   H.Register <- u
-
   go u.writePump()
 
-  u.Send <- sendClients
+  <-u.Finish // 等待添加进用户集合中再进行操作
+
+  // 发送给用户更新信息
+  SendSelfInfo(u)
+  SendAllClientsInfo(u)
 
   u.readPump()
 
@@ -136,7 +130,8 @@ func NewUser(ws *websocket.Conn) (*User, error) {
   }
 
   h := sha1.New()
-  id := h.Sum([]byte(l.Name + time.Now().String()))
+  h.Write([]byte(l.Name + time.Now().String()))
+  id := hex.EncodeToString(h.Sum(nil))
 
-  return &User{Ws: ws, LogicOb: l, Update: true, Send: make(chan []byte, 256), ID: id}, nil
+  return &User{Ws: ws, LogicOb: l, Update: true, Send: make(chan []byte, 256), ID: id, Finish: make(chan interface{})}, nil
 }

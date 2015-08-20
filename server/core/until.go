@@ -16,9 +16,11 @@ type C2SAction struct {
 }
 
 type S2CSelfInfo struct {
-  Type    int
-  ID      string
-  Clients Logic
+  Type         int
+  CanvasWidth  int
+  CanvasHeight int
+  ID           string
+  Clients      Logic
 }
 
 type S2CClientInfo struct {

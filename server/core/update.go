@@ -15,7 +15,10 @@ func UpdateClientsRun() {
     for {
       time.Sleep(UpdateClientsPeriod)
 
-      clients := S2CClientInfo{Type: CDUpdateClientsType, Clients: make([]Logic, 0)}
+      clients := S2CClientInfo{
+        Type:    CDUpdateClientsType,
+        Clients: make([]Logic, 0)}
+
       for n, u := range H.Users {
         if u.Update == true {
           clients.Clients = append(clients.Clients, *u.LogicOb)
@@ -27,48 +30,56 @@ func UpdateClientsRun() {
         continue
       }
 
-      sendClients, err := json.Marshal(clients)
-      if err != nil {
-        continue
-      }
-
-      H.Broadcast <- sendClients
+      Send2Broadcast(clients)
     }
   }()
 }
 
 func DeleteClient(u *User) {
-  client := S2CDeleteClient{Type: CDDeleteClientType, Name: u.LogicOb.Name}
+  client := S2CDeleteClient{
+    Type: CDDeleteClientType,
+    Name: u.LogicOb.Name}
 
-  deleteClient, err := json.Marshal(client)
-  if err != nil {
-    continue
-  }
-
-  H.Broadcast <- deleteClient
+  go Send2Broadcast(client)
 }
 
 func SendSelfInfo(u *User) {
-  client := S2CSelfInfo{Type: CDSelfClientType, ID: u.ID, Clients: u.LogicOb}
+  client := S2CSelfInfo{
+    Type:         CDSelfClientType,
+    ID:           u.ID,
+    Clients:      *u.LogicOb,
+    CanvasWidth:  CanvasWidth,
+    CanvasHeight: CanvasHeight}
 
-  selfClient, err := json.Marshal(client)
-  if err != nil {
-    continue
-  }
-
-  H.Broadcast <- selfClient
+  go Send2User(u, client)
 }
 
-func SendAllClientsInfo() {
-  clients := S2CClientInfo{Type: CDUpdateClientsType, Clients: make([]Logic, 0)}
-  for n, u := range H.Users {
+func SendAllClientsInfo(u *User) {
+  clients := S2CClientInfo{
+    Type:    CDAllClientsType,
+    Clients: make([]Logic, 0)}
+
+  for _, u := range H.Users {
     clients.Clients = append(clients.Clients, *u.LogicOb)
   }
 
-  sendClients, err := json.Marshal(clients)
+  go Send2User(u, clients)
+}
+
+func Send2Broadcast(s interface{}) {
+  s2c, err := json.Marshal(s)
   if err != nil {
-    continue
+    return
   }
 
-  H.Broadcast <- sendClients
+  H.Broadcast <- s2c
+}
+
+func Send2User(u *User, s interface{}) {
+  s2c, err := json.Marshal(s)
+  if err != nil {
+    return
+  }
+
+  u.Send <- s2c
 }
