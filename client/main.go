@@ -9,6 +9,7 @@ import (
 	"golang.org/x/mobile/exp/app/debug"
 	"golang.org/x/mobile/gl"
 
+	"github.com/busyStone/agar/client/internal/socket"
 	"github.com/busyStone/agar/client/internal/ui"
 )
 
@@ -22,6 +23,8 @@ var (
 	green  float32
 	touchX float32
 	touchY float32
+
+	conn *socket.Conn
 )
 
 func main() {
@@ -30,26 +33,10 @@ func main() {
 		for e := range a.Events() {
 			switch e := app.Filter(e).(type) {
 			case lifecycle.Event:
-				switch e.Crosses(lifecycle.StageVisible) {
-				case lifecycle.CrossOn:
-					ui.OnStart()
-				case lifecycle.CrossOff:
-					ui.OnStop()
-				}
+				appLifecycle(e)
 			case size.Event:
 				sz = e
-				touchX = float32(sz.WidthPx / 2)
-				touchY = float32(sz.HeightPx / 2)
 			case paint.Event:
-
-				green += 0.01
-				if green > 1 {
-					green = 0
-				}
-
-				player1 := newPlayer(touchX, touchY, sz)
-				player2 := newPlayer(touchX+float32(sz.WidthPx/10), touchY+float32(sz.HeightPx/10), sz)
-				ui.OnPaint([]ui.Player{player1, player2})
 
 				debug.DrawFPS(sz)
 
@@ -60,6 +47,32 @@ func main() {
 			}
 		}
 	})
+}
+
+func appLifecycle(e lifecycle.Event) error {
+	switch e.Crosses(lifecycle.StageVisible) {
+	case lifecycle.CrossOn:
+		if err := onStart(); err != nil {
+			return err
+		}
+	case lifecycle.CrossOff:
+		ui.OnStop()
+	}
+
+	return nil
+}
+
+func onStart() error {
+	if conn == nil {
+		var err error
+		conn, err = socket.NewConnect()
+		if err != nil {
+			return err
+		}
+	}
+	ui.OnStart()
+
+	return nil
 }
 
 func newPlayer(touchX, touchY float32, sz size.Event) ui.Player {

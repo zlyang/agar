@@ -16,8 +16,13 @@ const (
 	_writeBufSize = 1024
 )
 
+// Conn 封装 ws.Conn
+type Conn struct {
+	*ws.Conn
+}
+
 // NewConnect 创建新连接
-func NewConnect() (*ws.Conn, error) {
+func NewConnect() (*Conn, error) {
 	u, err := url.Parse(_connectURL)
 	if err != nil {
 		return nil, err
@@ -39,5 +44,5 @@ func NewConnect() (*ws.Conn, error) {
 		return nil, fmt.Errorf("websocket.NewClient Error: %s\nResp:%+v", err, resp)
 	}
 
-	return wsConn, nil
+	return &Conn{wsConn}, nil
 }
