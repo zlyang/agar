@@ -19,9 +19,9 @@ var (
 	color    gl.Uniform
 	buf      gl.Buffer
 
-	green             float32
-	touchXOld, touchX float32
-	touchYOld, touchY float32
+	green  float32
+	touchX float32
+	touchY float32
 )
 
 func main() {
