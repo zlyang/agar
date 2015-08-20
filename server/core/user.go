@@ -10,18 +10,6 @@ import (
   "github.com/gorilla/websocket"
 )
 
-// const (
-//   writeWait      = 10 * time.Second
-//   pongWait       = 60 * time.Second
-//   pingPeriod     = (pongWait * 9) / 10
-//   maxMessageSize = 512
-// )
-
-var upgrader = websocket.Upgrader{
-  ReadBufferSize:  1024,
-  WriteBufferSize: 1024,
-}
-
 type User struct { // 以map[string]user的形式保存用户信息
   LogicOb *Logic
   Update  bool // 标识是否需要推送
