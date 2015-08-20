@@ -12,6 +12,8 @@ import (
 var addr = flag.String("addr", ":8080", "http service address")
 
 func main() {
+  log.SetFlags(log.Lshortfile | log.LstdFlags)
+
   runtime.GOMAXPROCS(runtime.NumCPU())
 
   core.H.Run()
