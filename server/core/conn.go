@@ -74,6 +74,11 @@ func (c *Conn) Init(w http.ResponseWriter, r *http.Request) error {
     return errors.New("Method not allowed")
   }
 
+  var upgrader = websocket.Upgrader{
+    ReadBufferSize:  c.ReadBufferSize,
+    WriteBufferSize: c.WriteBufferSize,
+  }
+
   var err error
   c.Ws, err = upgrader.Upgrade(w, r, nil)
   if err != nil {
