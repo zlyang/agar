@@ -11,7 +11,7 @@ import (
 )
 
 type User struct { // 以map[string]user的形式保存用户信息
-  LogicOb *Logic
+  LogicOb *conn.Logic
   Update  bool // 标识是否需要推送
   ID      string
   Send    chan []byte
@@ -19,9 +19,9 @@ type User struct { // 以map[string]user的形式保存用户信息
 }
 
 func ServeConnect(w http.ResponseWriter, r *http.Request) {
-  conn := conn.DefaultConn
+  wsConn := conn.DefaultConn
 
-  err := conn.Serve(w, r)
+  err := wsConn.Serve(w, r)
   if err != nil {
     return
   }
@@ -34,7 +34,7 @@ func ServeConnect(w http.ResponseWriter, r *http.Request) {
 
   H.Register <- u
 
-  go conn.WritePump(u.Send)
+  go wsConn.WritePump(u.Send)
 
   <-u.Finish // 等待添加进用户集合中再进行操作
 
@@ -42,8 +42,8 @@ func ServeConnect(w http.ResponseWriter, r *http.Request) {
   SendSelfInfo(u)
   SendAllClientsInfo(u)
 
-  conn.ReadPump(func(message []byte) {
-    var m C2SAction
+  wsConn.ReadPump(func(message []byte) {
+    var m conn.C2SAction
     if err := json.Unmarshal(message, &m); err != nil {
       return
     }

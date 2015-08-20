@@ -40,7 +40,9 @@ const (
 
 func (c *Conn) ReadPump(handle func(m []byte), exception func()) {
 	defer func() {
-		exception()
+		if exception != nil {
+			exception()
+		}
 		c.ws.Close()
 	}()
 
@@ -53,7 +55,9 @@ func (c *Conn) ReadPump(handle func(m []byte), exception func()) {
 			break
 		}
 
-		handle(message)
+		if handle != nil {
+			handle(message)
+		}
 	}
 }
 

@@ -3,6 +3,8 @@ package core
 import (
   "encoding/json"
   "time"
+
+  "github.com/busyStone/agar/conn"
 )
 
 const (
@@ -15,9 +17,9 @@ func UpdateClientsRun() {
     for {
       time.Sleep(UpdateClientsPeriod)
 
-      clients := S2CClientInfo{
-        Type:    CDUpdateClientsType,
-        Clients: make([]Logic, 0)}
+      clients := conn.S2CClientInfo{
+        Type:    conn.CDUpdateClientsType,
+        Clients: make([]conn.Logic, 0)}
 
       for n, u := range H.Users {
         if u.Update == true {
@@ -36,34 +38,34 @@ func UpdateClientsRun() {
 }
 
 func DeleteClient(u *User) {
-  client := S2CDeleteClient{
-    Type: CDDeleteClientType,
+  client := conn.S2CDeleteClient{
+    Type: conn.CDDeleteClientType,
     Name: u.LogicOb.Name}
 
   go Send2Broadcast(client)
 }
 
 func SendSelfInfo(u *User) {
-  client := S2CSelfInfo{
-    Type:         CDSelfClientType,
+  client := conn.S2CSelfInfo{
+    Type:         conn.CDSelfClientType,
     ID:           u.ID,
     Clients:      *u.LogicOb,
     CanvasWidth:  CanvasWidth,
     CanvasHeight: CanvasHeight}
 
-  go Send2User(u, client)
+  Send2User(u, client)
 }
 
 func SendAllClientsInfo(u *User) {
-  clients := S2CClientInfo{
-    Type:    CDAllClientsType,
-    Clients: make([]Logic, 0)}
+  clients := conn.S2CClientInfo{
+    Type:    conn.CDAllClientsType,
+    Clients: make([]conn.Logic, 0)}
 
   for _, u := range H.Users {
     clients.Clients = append(clients.Clients, *u.LogicOb)
   }
 
-  go Send2User(u, clients)
+  Send2User(u, clients)
 }
 
 func Send2Broadcast(s interface{}) {

@@ -6,6 +6,8 @@ import (
   "math/rand"
   "strconv"
   "time"
+
+  "github.com/busyStone/agar/conn"
 )
 
 /*
@@ -25,17 +27,6 @@ const (
   RandColorString       = "ABCDEF0123456789"
 )
 
-type Coordinate struct {
-  X int
-  Y int
-}
-
-type Logic struct {
-  Position Coordinate
-  Color    string // 显示颜色
-  Name     string // 名称
-}
-
 type ActionHandleLog struct {
   ID     string
   Action string
@@ -45,7 +36,7 @@ var (
   HandleLogicChan chan ActionHandleLog
 )
 
-func NewLogicObject() (*Logic, error) {
+func NewLogicObject() (*conn.Logic, error) {
   r := rand.New(rand.NewSource(time.Now().UnixNano()))
 
   for i := 0; i < 100; i++ { // 只重试100次，如果没有分配到就返回错误
@@ -66,7 +57,9 @@ func NewLogicObject() (*Logic, error) {
       }
     }
 
-    return &Logic{Position: Coordinate{X: int(x), Y: int(y)}, Color: NewColor(), Name: NewName()}, nil
+    return &conn.Logic{
+      Position: conn.Coordinate{X: int(x), Y: int(y)},
+      Color:    NewColor(), Name: NewName()}, nil
   }
 
   return nil, errors.New("分配空间失败")
