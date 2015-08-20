@@ -6,7 +6,7 @@ import (
   "net/http"
   "runtime"
 
-  "github.com/zlyang/agar/server/core"
+  "github.com/busyStone/agar/server/core"
 )
 
 var addr = flag.String("addr", ":8080", "http service address")

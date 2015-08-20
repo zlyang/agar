@@ -5,6 +5,7 @@ import (
   "log"
   "net/http"
   "testing"
+  "time"
 
   "github.com/gorilla/websocket"
   // "github.com/zlyang/agar/server/core"
@@ -20,4 +21,10 @@ func TestConnect(t *testing.T) {
   if err != nil {
     t.Fatal(err)
   }
+
+  log.Print(messageType, string(content))
+
+  time.Sleep(time.Minute * 2)
+
+  conn.Close()
 }
