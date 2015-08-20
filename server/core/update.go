@@ -40,7 +40,7 @@ func DeleteClient(u *User) {
     Type: CDDeleteClientType,
     Name: u.LogicOb.Name}
 
-  Send2Broadcast(client)
+  go Send2Broadcast(client)
 }
 
 func SendSelfInfo(u *User) {
@@ -51,7 +51,7 @@ func SendSelfInfo(u *User) {
     CanvasWidth:  CanvasWidth,
     CanvasHeight: CanvasHeight}
 
-  Send2User(u, client)
+  go Send2User(u, client)
 }
 
 func SendAllClientsInfo(u *User) {
@@ -63,7 +63,7 @@ func SendAllClientsInfo(u *User) {
     clients.Clients = append(clients.Clients, *u.LogicOb)
   }
 
-  Send2User(u, clients)
+  go Send2User(u, clients)
 }
 
 func Send2Broadcast(s interface{}) {

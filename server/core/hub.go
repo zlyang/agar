@@ -1,9 +1,5 @@
 package core
 
-import (
-  "log"
-)
-
 type hub struct {
   Users      map[string]*User
   Broadcast  chan []byte
@@ -27,10 +23,9 @@ func (h *hub) Run() {
         u.Finish <- ""
       case u := <-h.Unregister:
         if _, ok := h.Users[u.ID]; ok {
-          go DeleteClient(u)
+          DeleteClient(u)
           delete(h.Users, u.ID)
           close(u.Send)
-          log.Print(len(h.Users), h.Users)
         }
       case m := <-h.Broadcast:
         for k, u := range h.Users {

@@ -33,16 +33,16 @@ type User struct { // 以map[string]user的形式保存用户信息
   Finish  chan interface{} // 无缓冲通道，用于通知操作完成
 }
 
-func (c *User) readPump() {
+func (u *User) readPump() {
   defer func() {
-    H.Unregister <- c
-    c.Ws.Close()
+    H.Unregister <- u
+    u.Ws.Close()
   }()
-  c.Ws.SetReadLimit(maxMessageSize)
-  c.Ws.SetReadDeadline(time.Now().Add(pongWait))
-  c.Ws.SetPongHandler(func(string) error { c.Ws.SetReadDeadline(time.Now().Add(pongWait)); return nil })
+  u.Ws.SetReadLimit(maxMessageSize)
+  u.Ws.SetReadDeadline(time.Now().Add(pongWait))
+  u.Ws.SetPongHandler(func(string) error { u.Ws.SetReadDeadline(time.Now().Add(pongWait)); return nil })
   for {
-    _, message, err := c.Ws.ReadMessage()
+    _, message, err := u.Ws.ReadMessage()
     if err != nil {
       break
     }
@@ -57,30 +57,30 @@ func (c *User) readPump() {
   }
 }
 
-func (c *User) write(mt int, payload []byte) error {
-  c.Ws.SetWriteDeadline(time.Now().Add(writeWait))
-  return c.Ws.WriteMessage(mt, payload)
+func (u *User) write(mt int, payload []byte) error {
+  u.Ws.SetWriteDeadline(time.Now().Add(writeWait))
+  return u.Ws.WriteMessage(mt, payload)
 }
 
-func (c *User) writePump() {
+func (u *User) writePump() {
   ticker := time.NewTicker(pingPeriod)
   defer func() {
     ticker.Stop()
-    c.Ws.Close()
+    u.Ws.Close()
   }()
 
   for {
     select {
-    case message, ok := <-c.Send:
+    case message, ok := <-u.Send:
       if !ok { // 如果send channel出错，则关闭连接
-        c.write(websocket.CloseMessage, []byte{})
+        u.write(websocket.CloseMessage, []byte{})
         return
       }
-      if err := c.write(websocket.TextMessage, message); err != nil {
+      if err := u.write(websocket.TextMessage, message); err != nil {
         return
       }
     case <-ticker.C: // 超时，发送Ping包
-      if err := c.write(websocket.PingMessage, []byte{}); err != nil {
+      if err := u.write(websocket.PingMessage, []byte{}); err != nil {
         return
       }
     }
@@ -112,7 +112,7 @@ func ServeConnect(w http.ResponseWriter, r *http.Request) {
   H.Register <- u
   go u.writePump()
 
-  <-u.Finish
+  <-u.Finish // 等待添加进用户集合中再进行操作
 
   // 发送给用户更新信息
   SendSelfInfo(u)
