@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"log"
 	"strconv"
 	"strings"
 
@@ -35,11 +34,11 @@ var (
 	mClients       = make(map[string]conn.Logic)
 
 	paintPlayers []ui.Player
+	sz           size.Event
 )
 
 func main() {
 	app.Main(func(a app.App) {
-		var sz size.Event
 		for e := range a.Events() {
 			switch e := app.Filter(e).(type) {
 			case lifecycle.Event:
@@ -58,7 +57,6 @@ func main() {
 			case touch.Event:
 				touchX = e.X
 				touchY = e.Y
-				log.Println(touchX, touchY)
 			}
 		}
 	})
@@ -135,13 +133,13 @@ func handleMessage(message []byte) {
 	// 构造 players
 	var players []ui.Player
 	for _, v := range mClients {
-		players = append(players, newPlayer(&v))
+		players = append(players, newPlayer(&v, sz))
 	}
 
 	paintPlayers = players
 }
 
-func newPlayer(client *conn.Logic) ui.Player {
+func newPlayer(client *conn.Logic, sz size.Event) ui.Player {
 	player := ui.Player{}
 
 	R, G, B := paseColor(client.Color)
@@ -152,8 +150,8 @@ func newPlayer(client *conn.Logic) ui.Player {
 	player.Color.G = G
 	player.Color.B = B
 
-	player.Pos.X = float32(client.Position.X)
-	player.Pos.Y = float32(client.Position.Y)
+	player.Pos.X = float32(client.Position.X) / float32(sz.WidthPx)
+	player.Pos.Y = float32(client.Position.Y) / float32(sz.HeightPx)
 
 	return player
 }
