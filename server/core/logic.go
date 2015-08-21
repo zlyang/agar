@@ -22,9 +22,10 @@ const (
   ActionLogHandlePeriod = (1000 / 66) * time.Millisecond // 66Hz
   CanvasWidth           = 600                            // 画布的宽度
   CanvasHeight          = 800                            // 画布的高度
-  ObjectWidth           = 9                              // 绘制物体的宽度，正方形
+  ObjectWidth           = 15                             // 绘制物体的宽度，正方形
   RandString            = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
   RandColorString       = "ABCDEF0123456789"
+  CanvasStep            = 3
 )
 
 type ActionHandleLog struct {
@@ -90,10 +91,11 @@ func NewColor() string {
 // 周期性处理所有请求，周期小于update clients的周期
 // 实时处理，不进行周期。周期处理在这作用不大
 func HandleLogicRun() {
-  HandleLogicChan = make(chan ActionHandleLog, 1000)
+  HandleLogicChan = make(chan ActionHandleLog, 100000)
 
   go func() {
     for {
+      time.Sleep(ActionLogHandlePeriod)
       select {
       case a := <-HandleLogicChan: // 以进入channel的时间为顺序，不考虑阻塞的情况
         move(a)
@@ -111,25 +113,25 @@ func move(a ActionHandleLog) {
   prediction := self.LogicOb.Position
   switch a.Action { // 由于有宽度，且每次都只移动一步，所以不存在有减为负数的情况
   case "R":
-    prediction.X += 1
+    prediction.X += CanvasStep
   case "L":
-    prediction.X -= 1
+    prediction.X -= CanvasStep
   case "U":
-    prediction.Y -= 1
+    prediction.Y -= CanvasStep
   case "D":
-    prediction.Y += 1
+    prediction.Y += CanvasStep
   case "UL":
-    prediction.X -= 1
-    prediction.Y -= 1
+    prediction.X -= CanvasStep
+    prediction.Y -= CanvasStep
   case "UR":
-    prediction.X += 1
-    prediction.Y -= 1
+    prediction.X += CanvasStep
+    prediction.Y -= CanvasStep
   case "DL":
-    prediction.X -= 1
-    prediction.Y += 1
+    prediction.X -= CanvasStep
+    prediction.Y += CanvasStep
   case "DR":
-    prediction.X += 1
-    prediction.Y += 1
+    prediction.X += CanvasStep
+    prediction.Y += CanvasStep
   default:
     return
   }
