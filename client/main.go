@@ -37,6 +37,12 @@ var (
 	sz           size.Event
 )
 
+const (
+	_connectURL   =  "ws://127.0.0.1:8080/connect"
+	_readBufSize  = 1024
+	_writeBufSize = 1024
+)
+
 func main() {
 	app.Main(func(a app.App) {
 		for e := range a.Events() {
@@ -107,7 +113,7 @@ func appLifecycle(e lifecycle.Event) error {
 }
 
 func onStart() error {
-	err := wsConn.Client()
+	err := wsConn.Client(_connectURL,_writeBufSize,_readBufSize)
 	if err != nil {
 		return err
 	}
@@ -189,8 +195,8 @@ func paseColor(color string) (R, G, B float32) {
 		return
 	}
 
-	R = float32(intColor>>16) / float32(255)
-	G = float32((intColor&0x0FF00)>>8) / float32(255)
-	B = float32(intColor&0x0FF) / float32(255)
+	R = float32(intColor >> 16)/float32(255)
+	G = float32((intColor & 0x0FF00) >> 8)/float32(255)
+	B = float32(intColor & 0x0FF)/float32(255)
 	return
 }

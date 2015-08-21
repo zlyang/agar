@@ -27,16 +27,9 @@ var DefaultConn = Conn{
 	PongWait:        60 * time.Second,
 	PingPeriod:      (60 * time.Second * 9) / 10,
 	MaxMessageSize:  512,
-	ReadBufferSize:  _readBufSize,
-	WriteBufferSize: _writeBufSize,
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
 }
-
-const (
-	_host         = "ws://127.0.0.1:8080"
-	_connectURL   = _host + "/connect"
-	_readBufSize  = 1024
-	_writeBufSize = 1024
-)
 
 func (c *Conn) ReadPump(handle func(m []byte), exception func()) {
 	defer func() {
@@ -112,13 +105,13 @@ func (c *Conn) Serve(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-func (c *Conn) Client() error {
+func (c *Conn) Client(connectURL string, readBufSize, writeBufSize int) error {
 
 	if c.ws != nil {
 		return nil
 	}
 
-	u, err := url.Parse(_connectURL)
+	u, err := url.Parse(connectURL)
 	if err != nil {
 		return err
 	}
@@ -127,14 +120,14 @@ func (c *Conn) Client() error {
 	if err != nil {
 		return err
 	}
-
+	log.Println(u.Host)
 	wsHeaders := http.Header{
-		"Origin": {_host},
+		"Origin": {u.Scheme + "://" + u.Host},
 		// your milage may differ
 		"Sec-WebSocket-Extensions": {"permessage-deflate; client_max_window_bits, x-webkit-deflate-frame"},
 	}
 
-	wsConn, resp, err := websocket.NewClient(rawConn, u, wsHeaders, _readBufSize, _writeBufSize)
+	wsConn, resp, err := websocket.NewClient(rawConn, u, wsHeaders, readBufSize, writeBufSize)
 	if err != nil {
 		return fmt.Errorf("websocket.NewClient Error: %s\nResp:%+v", err, resp)
 	}

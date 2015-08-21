@@ -145,7 +145,7 @@ func move(a ActionHandleLog) {
   // 再查看是否与其它玩家有交集
   for n, u := range H.Users {
     if n != a.ID {
-      if math.Abs(float64(u.LogicOb.Position.X-prediction.X)) < ObjectWidth ||
+      if math.Abs(float64(u.LogicOb.Position.X-prediction.X)) < ObjectWidth &&
         math.Abs(float64(u.LogicOb.Position.Y-prediction.Y)) < ObjectWidth {
         return
       }
