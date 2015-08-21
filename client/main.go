@@ -169,10 +169,6 @@ func newPlayer(client *conn.Logic, sz size.Event) ui.Player {
 
 	R, G, B := paseColor(client.Color)
 
-	R = 0.0
-	G = 255.0
-	B = 0.0
-
 	player.Color.R = R
 	player.Color.G = G
 	player.Color.B = B
@@ -193,9 +189,8 @@ func paseColor(color string) (R, G, B float32) {
 		return
 	}
 
-	R = float32(intColor >> 16)
-	G = float32((intColor & 0x0FF00) >> 8)
-	B = float32(intColor & 0x0FF)
-
+	R = float32(intColor>>16) / float32(255)
+	G = float32((intColor&0x0FF00)>>8) / float32(255)
+	B = float32(intColor&0x0FF) / float32(255)
 	return
 }
