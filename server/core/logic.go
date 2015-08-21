@@ -20,12 +20,12 @@ import (
 
 const (
   ActionLogHandlePeriod = (1000 / 66) * time.Millisecond // 66Hz
-  CanvasWidth           = 600                            // 画布的宽度
-  CanvasHeight          = 800                            // 画布的高度
-  ObjectWidth           = 15                             // 绘制物体的宽度，正方形
+  CanvasWidth           = 1080                           // 画布的宽度
+  CanvasHeight          = 1920                           // 画布的高度
+  ObjectWidth           = 30                             // 绘制物体的宽度，正方形
   RandString            = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
   RandColorString       = "ABCDEF0123456789"
-  CanvasStep            = 3
+  CanvasStep            = 12
 )
 
 type ActionHandleLog struct {
@@ -95,7 +95,6 @@ func HandleLogicRun() {
 
   go func() {
     for {
-      time.Sleep(ActionLogHandlePeriod)
       select {
       case a := <-HandleLogicChan: // 以进入channel的时间为顺序，不考虑阻塞的情况
         move(a)

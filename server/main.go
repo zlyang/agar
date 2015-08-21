@@ -22,7 +22,7 @@ func main() {
 
   http.HandleFunc("/connect", core.ServeConnect)
 
-  err := http.ListenAndServe(*addr, nil)
+  err := http.ListenAndServe("192.168.1.113:8080", nil)
   if err != nil {
     log.Fatal("ListenAndServe: ", err)
   }
