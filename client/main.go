@@ -38,13 +38,14 @@ var (
 )
 
 const (
-	_connectURL   =  "ws://127.0.0.1:8080/connect"
+	_connectURL   = "ws://127.0.0.1:8080/connect"
 	_readBufSize  = 1024
 	_writeBufSize = 1024
 )
 
 func main() {
 	app.Main(func(a app.App) {
+
 		for e := range a.Events() {
 			switch e := app.Filter(e).(type) {
 			case lifecycle.Event:
@@ -99,13 +100,9 @@ func appLifecycle(e lifecycle.Event) error {
 			return err
 		}
 
-		// 启动 读取 goroutine
-		go wsConn.ReadPump(handleMessage, nil)
-		go wsConn.WritePump(wsConnWriteChan)
+		ui.OnStart()
 
 	case lifecycle.CrossOff:
-		// 关闭 读取 goroutine
-
 		ui.OnStop()
 	}
 
@@ -113,12 +110,16 @@ func appLifecycle(e lifecycle.Event) error {
 }
 
 func onStart() error {
-	err := wsConn.Client(_connectURL,_writeBufSize,_readBufSize)
-	if err != nil {
-		return err
-	}
+	if !wsConn.IsConnValid() {
+		err := wsConn.Client(_connectURL, _writeBufSize, _readBufSize)
+		if err != nil {
+			return err
+		}
 
-	ui.OnStart()
+		// 启动 读取 goroutine
+		go wsConn.ReadPump(handleMessage, nil)
+		go wsConn.WritePump(wsConnWriteChan)
+	}
 
 	return nil
 }
@@ -145,6 +146,7 @@ func handleMessage(message []byte) {
 		for i := 0; i < len(info.Clients); i++ {
 			mClients[info.Clients[i].Name] = info.Clients[i]
 		}
+
 	case conn.CDDeleteClientType: // 有用户断线
 		info := conn.S2CDeleteClient{}
 		if err := json.Unmarshal(message, &info); err != nil {
@@ -195,8 +197,8 @@ func paseColor(color string) (R, G, B float32) {
 		return
 	}
 
-	R = float32(intColor >> 16)/float32(255)
-	G = float32((intColor & 0x0FF00) >> 8)/float32(255)
-	B = float32(intColor & 0x0FF)/float32(255)
+	R = float32(intColor>>16) / float32(255)
+	G = float32((intColor&0x0FF00)>>8) / float32(255)
+	B = float32(intColor&0x0FF) / float32(255)
 	return
 }

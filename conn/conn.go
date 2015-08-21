@@ -105,11 +105,11 @@ func (c *Conn) Serve(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-func (c *Conn) Client(connectURL string, readBufSize, writeBufSize int) error {
+func (c *Conn) IsConnValid() bool {
+	return c.ws != nil
+}
 
-	if c.ws != nil {
-		return nil
-	}
+func (c *Conn) Client(connectURL string, readBufSize, writeBufSize int) error {
 
 	u, err := url.Parse(connectURL)
 	if err != nil {
@@ -120,7 +120,7 @@ func (c *Conn) Client(connectURL string, readBufSize, writeBufSize int) error {
 	if err != nil {
 		return err
 	}
-	log.Println(u.Host)
+
 	wsHeaders := http.Header{
 		"Origin": {u.Scheme + "://" + u.Host},
 		// your milage may differ
