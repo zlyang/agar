@@ -1,7 +1,10 @@
 package core
 
 import (
+  "bytes"
+  "compress/gzip"
   "encoding/json"
+  "log"
   "time"
 
   "github.com/busyStone/agar/conn"
@@ -74,6 +77,9 @@ func Send2Broadcast(s interface{}) {
     return
   }
 
+  s2cc := Gzip(s2c)
+  log.Println(len(s2c), len(s2cc))
+
   H.Broadcast <- s2c
 }
 
@@ -83,5 +89,19 @@ func Send2User(u *User, s interface{}) {
     return
   }
 
-  u.Send <- s2c
+  s2cc := Gzip(s2c)
+  log.Println(len(s2c), len(s2cc))
+
+  u.Send <- s2cc
+}
+
+func Gzip(s []byte) []byte {
+  var b bytes.Buffer
+  w := gzip.NewWriter(&b)
+  defer w.Close()
+
+  w.Write(s)
+  w.Flush()
+
+  return b.Bytes()
 }

@@ -12,7 +12,7 @@ import (
 var addr = flag.String("addr", ":8080", "http service address")
 
 func main() {
-  log.SetFlags(log.Lshortfile | log.LstdFlags)
+  log.SetFlags(log.Llongfile | log.LstdFlags | log.Lmicroseconds)
 
   runtime.GOMAXPROCS(runtime.NumCPU())
 
@@ -22,7 +22,7 @@ func main() {
 
   http.HandleFunc("/connect", core.ServeConnect)
 
-  err := http.ListenAndServe("192.168.1.113:8080", nil)
+  err := http.ListenAndServe(":8080", nil)
   if err != nil {
     log.Fatal("ListenAndServe: ", err)
   }

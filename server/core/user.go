@@ -66,5 +66,5 @@ func NewUser() (*User, error) {
   h.Write([]byte(l.Name + time.Now().String()))
   id := hex.EncodeToString(h.Sum(nil))
 
-  return &User{LogicOb: l, Update: true, Send: make(chan []byte, 256), ID: id, Finish: make(chan interface{})}, nil
+  return &User{LogicOb: l, Update: true, Send: make(chan []byte, 100*1024), ID: id, Finish: make(chan interface{})}, nil
 }
