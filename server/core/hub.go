@@ -1,5 +1,9 @@
 package core
 
+import (
+  "github.com/busyStone/agar/conn"
+)
+
 type hub struct {
   Users      map[string]*User
   Broadcast  chan []byte
@@ -25,16 +29,10 @@ func (h *hub) Run() {
         if _, ok := h.Users[u.ID]; ok {
           DeleteClient(u)
           delete(h.Users, u.ID)
-          close(u.Send)
         }
       case m := <-h.Broadcast:
-        for k, u := range h.Users {
-          select {
-          case u.Send <- m:
-          default:
-            close(u.Send)
-            delete(h.Users, k)
-          }
+        for _, u := range h.Users {
+          conn.SocketServerInstance.Request(m, "update", u.ID)
         }
       }
     }

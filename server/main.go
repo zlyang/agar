@@ -3,10 +3,11 @@ package main
 import (
   "flag"
   "log"
-  "net/http"
   "runtime"
 
+  "github.com/busyStone/agar/conn"
   "github.com/busyStone/agar/server/core"
+  "github.com/henrylee2cn/teleport"
 )
 
 var addr = flag.String("addr", ":8080", "http service address")
@@ -20,10 +21,14 @@ func main() {
   core.UpdateClientsRun()
   core.HandleLogicRun()
 
-  http.HandleFunc("/connect", core.ServeConnect)
+  conn.SocketServerInstance = conn.NewServer(teleport.API{conn.CDConnectType: core.ServeConnect,
+    "move": core.UserMove})
 
-  err := http.ListenAndServe(":8080", nil)
-  if err != nil {
-    log.Fatal("ListenAndServe: ", err)
-  }
+  // http.HandleFunc("/connect", core.ServeConnect)
+
+  // err := http.ListenAndServe(":8080", nil)
+  // if err != nil {
+  // log.Fatal("ListenAndServe: ", err)
+  // }
+  select {}
 }

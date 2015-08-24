@@ -1,0 +1,32 @@
+package conn;
+
+message C2SAction {
+  required string Action = 2;
+}
+
+message Coordinate {
+  required int32 X = 1;
+  required int32 Y = 2;
+}
+
+message Logic {
+ required Coordinate Position = 1;
+ required string Color = 2; 
+ required string Name = 3; 
+}
+
+message S2CSelfInfo {
+  required int32 CanvasWidth = 2;
+  required int32 CanvasHeight = 3;
+  required Logic Clients = 4;  
+}
+
+message S2CClientInfo {
+  repeated Logic Clients = 2;
+}
+
+message S2CDeleteClient {
+  required string Name = 2;
+}
+
+

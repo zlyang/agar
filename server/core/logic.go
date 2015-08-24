@@ -8,6 +8,7 @@ import (
   "time"
 
   "github.com/busyStone/agar/conn"
+  "github.com/golang/protobuf/proto"
 )
 
 /*
@@ -25,7 +26,7 @@ const (
   ObjectWidth           = 30                             // 绘制物体的宽度，正方形
   RandString            = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
   RandColorString       = "ABCDEF0123456789"
-  CanvasStep            = 12
+  CanvasStep            = int32(12)
 )
 
 type ActionHandleLog struct {
@@ -52,15 +53,16 @@ func NewLogicObject() (*conn.Logic, error) {
 
     // 判断有没有与其它的对象有重叠
     for _, u := range H.Users {
-      if math.Abs(float64(u.LogicOb.Position.X-int(x))) < ObjectWidth ||
-        math.Abs(float64(u.LogicOb.Position.Y-int(y))) < ObjectWidth {
+      if math.Abs(float64(*u.LogicOb.Position.X-int32(x))) < ObjectWidth ||
+        math.Abs(float64(*u.LogicOb.Position.Y-int32(y))) < ObjectWidth {
         break
       }
     }
 
     return &conn.Logic{
-      Position: conn.Coordinate{X: int(x), Y: int(y)},
-      Color:    NewColor(), Name: NewName()}, nil
+      Position: &conn.Coordinate{X: proto.Int32(int32(x)), Y: proto.Int32(int32(y))},
+      Color:    proto.String(NewColor()),
+      Name:     proto.String(NewName())}, nil
   }
 
   return nil, errors.New("分配空间失败")
@@ -112,40 +114,40 @@ func move(a ActionHandleLog) {
   prediction := self.LogicOb.Position
   switch a.Action { // 由于有宽度，且每次都只移动一步，所以不存在有减为负数的情况
   case "R":
-    prediction.X += CanvasStep
+    *prediction.X += CanvasStep
   case "L":
-    prediction.X -= CanvasStep
+    *prediction.X -= CanvasStep
   case "U":
-    prediction.Y -= CanvasStep
+    *prediction.Y -= CanvasStep
   case "D":
-    prediction.Y += CanvasStep
+    *prediction.Y += CanvasStep
   case "UL":
-    prediction.X -= CanvasStep
-    prediction.Y -= CanvasStep
+    *prediction.X -= CanvasStep
+    *prediction.Y -= CanvasStep
   case "UR":
-    prediction.X += CanvasStep
-    prediction.Y -= CanvasStep
+    *prediction.X += CanvasStep
+    *prediction.Y -= CanvasStep
   case "DL":
-    prediction.X -= CanvasStep
-    prediction.Y += CanvasStep
+    *prediction.X -= CanvasStep
+    *prediction.Y += CanvasStep
   case "DR":
-    prediction.X += CanvasStep
-    prediction.Y += CanvasStep
+    *prediction.X += CanvasStep
+    *prediction.Y += CanvasStep
   default:
     return
   }
 
   // 先查看是否到边沿
-  if prediction.X < ObjectWidth/2 || prediction.X > (CanvasWidth-ObjectWidth/2) ||
-    prediction.Y < ObjectWidth/2 || prediction.Y > (CanvasHeight-ObjectWidth/2) {
+  if *prediction.X < ObjectWidth/2 || *prediction.X > (CanvasWidth-ObjectWidth/2) ||
+    *prediction.Y < ObjectWidth/2 || *prediction.Y > (CanvasHeight-ObjectWidth/2) {
     return
   }
 
   // 再查看是否与其它玩家有交集
   for n, u := range H.Users {
     if n != a.ID {
-      if math.Abs(float64(u.LogicOb.Position.X-prediction.X)) < ObjectWidth &&
-        math.Abs(float64(u.LogicOb.Position.Y-prediction.Y)) < ObjectWidth {
+      if math.Abs(float64(*u.LogicOb.Position.X-*prediction.X)) < ObjectWidth &&
+        math.Abs(float64(*u.LogicOb.Position.Y-*prediction.Y)) < ObjectWidth {
         return
       }
     }

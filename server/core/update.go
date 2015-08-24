@@ -8,6 +8,7 @@ import (
   "time"
 
   "github.com/busyStone/agar/conn"
+  "github.com/golang/protobuf/proto"
 )
 
 const (
@@ -21,12 +22,11 @@ func UpdateClientsRun() {
       time.Sleep(UpdateClientsPeriod)
 
       clients := conn.S2CClientInfo{
-        Type:    conn.CDUpdateClientsType,
-        Clients: make([]conn.Logic, 0)}
+        Clients: make([]*conn.Logic, 0)}
 
       for n, u := range H.Users {
         if u.Update == true {
-          clients.Clients = append(clients.Clients, *u.LogicOb)
+          clients.Clients = append(clients.Clients, u.LogicOb)
           H.Users[n].Update = false
         }
       }
@@ -35,64 +35,72 @@ func UpdateClientsRun() {
         continue
       }
 
-      Send2Broadcast(clients)
+      Send2Broadcast(&clients)
     }
   }()
 }
 
 func DeleteClient(u *User) {
   client := conn.S2CDeleteClient{
-    Type: conn.CDDeleteClientType,
     Name: u.LogicOb.Name}
 
-  go Send2Broadcast(client)
+  go Send2Broadcast(&client)
 }
 
 func SendSelfInfo(u *User) {
   client := conn.S2CSelfInfo{
-    Type:         conn.CDSelfClientType,
-    ID:           u.ID,
-    Clients:      *u.LogicOb,
-    CanvasWidth:  CanvasWidth,
-    CanvasHeight: CanvasHeight}
+    Clients:      u.LogicOb,
+    CanvasWidth:  proto.Int32(int32(CanvasWidth)),
+    CanvasHeight: proto.Int32(int32(CanvasHeight))}
 
-  Send2User(u, client)
+  Send2User(u, &client, conn.CDSelfClientType)
 }
 
 func SendAllClientsInfo(u *User) {
   clients := conn.S2CClientInfo{
-    Type:    conn.CDAllClientsType,
-    Clients: make([]conn.Logic, 0)}
+    Clients: make([]*conn.Logic, 0)}
 
   for _, u := range H.Users {
-    clients.Clients = append(clients.Clients, *u.LogicOb)
+    clients.Clients = append(clients.Clients, u.LogicOb)
   }
 
-  Send2User(u, clients)
+  Send2User(u, &clients, conn.CDAllClientsType)
 }
 
-func Send2Broadcast(s interface{}) {
-  s2c, err := json.Marshal(s)
+func Send2Broadcast(s proto.Message) {
+  s2cjson, err := json.Marshal(s)
   if err != nil {
     return
   }
 
-  s2cc := Gzip(s2c)
-  log.Println(len(s2c), len(s2cc))
+  s2c, err := proto.Marshal(proto.Message(s))
+  if err != nil {
+    return
+  }
+
+  log.Println(len(s2cjson), len(s2c))
+
+  // s2cc := Gzip(s2c)
 
   H.Broadcast <- s2c
 }
 
-func Send2User(u *User, s interface{}) {
-  s2c, err := json.Marshal(s)
+func Send2User(u *User, s proto.Message, action string) {
+  s2cjson, err := json.Marshal(s)
   if err != nil {
     return
   }
 
-  s2cc := Gzip(s2c)
-  log.Println(len(s2c), len(s2cc))
+  // s2c, err := json.Marshal(s)
+  s2c, err := proto.Marshal(s)
+  if err != nil {
+    return
+  }
 
-  u.Send <- s2cc
+  log.Println(len(s2cjson), len(s2c), u.ID, action, u)
+
+  // s2cc := Gzip(s2c)
+  conn.SocketServerInstance.Request(s2c, action, u.ID)
 }
 
 func Gzip(s []byte) []byte {
