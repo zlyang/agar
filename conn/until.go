@@ -7,7 +7,7 @@ const (
   CDSelfClientType    = "self"   // 连接时返回自己的信息
   CDConnectType       = "connect"
 
-  CUActionType = "action" // 客户端向服务器发送它的动作
+  CUMoveType = "move" // 客户端向服务器发送它的动作
 )
 
 // type C2SAction struct {

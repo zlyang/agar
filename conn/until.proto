@@ -9,6 +9,7 @@ message Coordinate {
   required int32 Y = 2;
 }
 
+
 message Logic {
  required Coordinate Position = 1;
  required string Color = 2; 
@@ -28,5 +29,4 @@ message S2CClientInfo {
 message S2CDeleteClient {
   required string Name = 2;
 }
-
 

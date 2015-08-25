@@ -3,8 +3,8 @@ package core
 import (
   "bytes"
   "compress/gzip"
-  "encoding/json"
-  "log"
+  // "encoding/json"
+  // "log"
   "time"
 
   "github.com/busyStone/agar/conn"
@@ -68,28 +68,29 @@ func SendAllClientsInfo(u *User) {
 }
 
 func Send2Broadcast(s proto.Message) {
-  s2cjson, err := json.Marshal(s)
-  if err != nil {
-    return
-  }
+  // s2cjson, err := json.Marshal(s)
+  // if err != nil {
+  //   return
+  // }
 
   s2c, err := proto.Marshal(proto.Message(s))
   if err != nil {
     return
   }
 
-  log.Println(len(s2cjson), len(s2c))
+  // log.Println(len(s2cjson), len(s2c))
 
   // s2cc := Gzip(s2c)
+  // log.Println(len(s2cc), len(s2c))
 
   H.Broadcast <- s2c
 }
 
 func Send2User(u *User, s proto.Message, action string) {
-  s2cjson, err := json.Marshal(s)
-  if err != nil {
-    return
-  }
+  // s2cjson, err := json.Marshal(s)
+  // if err != nil {
+  //   return
+  // }
 
   // s2c, err := json.Marshal(s)
   s2c, err := proto.Marshal(s)
@@ -97,7 +98,7 @@ func Send2User(u *User, s proto.Message, action string) {
     return
   }
 
-  log.Println(len(s2cjson), len(s2c), u.ID, action, u)
+  // log.Println(len(s2cjson), len(s2c), u.ID, action, u)
 
   // s2cc := Gzip(s2c)
   conn.SocketServerInstance.Request(s2c, action, u.ID)

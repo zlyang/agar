@@ -1,10 +1,10 @@
 package core
 
 import (
-  "encoding/json"
   "log"
 
   "github.com/busyStone/agar/conn"
+  "github.com/golang/protobuf/proto"
   "github.com/henrylee2cn/teleport"
 )
 
@@ -17,12 +17,13 @@ type User struct { // 以map[string]user的形式保存用户信息
 
 func UserMove(receive *teleport.NetData) *teleport.NetData {
   var m conn.C2SAction
-  if err := json.Unmarshal([]byte(receive.Body.(string)), &m); err != nil {
+  err := proto.Unmarshal(receive.Body.([]byte), &m)
+  if err != nil {
     log.Println(err)
     return nil
   }
-  log.Println(m)
-  HandleLogicChan <- ActionHandleLog{ID: receive.UID, Action: *m.Action} // 处理动作
+
+  HandleLogicChan <- ActionHandleLog{ID: receive.From, Action: m.GetAction()} // 处理动作
 
   return nil
 }

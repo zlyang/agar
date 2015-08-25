@@ -1,7 +1,6 @@
 package main
 
 import (
-  "encoding/base64"
   "log"
 
   "github.com/busyStone/agar/conn"
@@ -9,42 +8,36 @@ import (
   "github.com/henrylee2cn/teleport"
 )
 
-const (
-  base64Table = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
-)
-
-var coder = base64.NewEncoding(base64Table)
-
 func main() {
   log.SetFlags(log.Llongfile | log.LstdFlags | log.Lmicroseconds)
 
-  tp := conn.NewClient("127.0.0.1", teleport.API{conn.CDSelfClientType: Self,
-    "all":    func(receive *teleport.NetData) *teleport.NetData { return nil },
-    "update": func(receive *teleport.NetData) *teleport.NetData { return nil }})
+  tp := conn.NewClient("127.0.0.1", teleport.API{conn.CDSelfClientType: new(Self),
+    "all":    new(All),
+    "update": new(Update)})
   tp.Request("", conn.CDConnectType)
 
   select {}
 }
 
-func Self(receive *teleport.NetData) *teleport.NetData {
-  body, ok := receive.Body.(string)
-  if !ok {
-    log.Fatalln("string error")
-    return nil
-  }
+type All struct {
+}
 
-  message, err := coder.DecodeString(body)
-  if err != nil {
-    log.Fatalln(body, err)
-    return nil
-  }
+func (*All) Process(receive *teleport.NetData) *teleport.NetData { return nil }
 
+type Update struct {
+}
+
+func (*Update) Process(receive *teleport.NetData) *teleport.NetData { return nil }
+
+type Self struct{}
+
+func (*Self) Process(receive *teleport.NetData) *teleport.NetData {
   var x conn.S2CSelfInfo
-  err = proto.Unmarshal(message, &x)
+  err := proto.Unmarshal(receive.Body.([]byte), &x)
   if err != nil {
     log.Fatalln("fail", err)
   }
-
+  log.Println(x.GetCanvasWidth())
   log.Fatalln("success", x)
 
   return nil

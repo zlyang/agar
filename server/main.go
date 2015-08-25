@@ -21,8 +21,8 @@ func main() {
   core.UpdateClientsRun()
   core.HandleLogicRun()
 
-  conn.SocketServerInstance = conn.NewServer(teleport.API{conn.CDConnectType: core.ServeConnect,
-    "move": core.UserMove})
+  conn.SocketServerInstance = conn.NewServer(teleport.API{conn.CDConnectType: new(ServerConnect),
+    conn.CUMoveType: new(ClientMove)})
 
   // http.HandleFunc("/connect", core.ServeConnect)
 
@@ -31,4 +31,16 @@ func main() {
   // log.Fatal("ListenAndServe: ", err)
   // }
   select {}
+}
+
+type ServerConnect struct{}
+
+func (*ServerConnect) Process(receive *teleport.NetData) *teleport.NetData {
+  return core.ServeConnect(receive)
+}
+
+type ClientMove struct{}
+
+func (*ClientMove) Process(receive *teleport.NetData) *teleport.NetData {
+  return core.UserMove(receive)
 }
