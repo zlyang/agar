@@ -18,6 +18,8 @@ var H = hub{
   Users:      make(map[string]*User),
 }
 
+ddd
+
 func (h *hub) Run() {
   go func() {
     for {
